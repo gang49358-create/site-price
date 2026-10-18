@@ -1,0 +1,24 @@
+<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Админ-панель — Baze China</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Manrope:wght@400;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css">
+<style>main{padding:30px 5%;max-width:1000px;margin:auto}.tabs{margin-top:10px}select{width:auto;display:inline-block}</style></head><body>
+<header><a class="logo" href="index.html">B<span>AZE</span> ADMIN</a><nav><a href="index.html">На сайт</a><button onclick="localStorage.removeItem('bc_me');location.href='index.html'">Выйти</button></nav></header>
+<main><div class="stat" id="stat"></div><div class="tabs" id="tb"></div><div id="v"></div></main><div id="toast"></div>
+<script>
+const L=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},S=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),fmt=n=>n.toLocaleString('ru-RU')+' ₽';
+const m=L('bc_me',null);if(!m||!m.admin)location.replace('index.html');
+const ST=['Новый','Оплачен','Отправлен','Выдан','Отменён'];let tab='Заказы',f='Все';
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),1800)}
+function st(id,v){const o=L('bc_orders',[]);o.find(x=>x.id===id).st=v;S('bc_orders',o);toast('Статус обновлён');draw()}
+function delO(id){if(confirm('Удалить заказ №'+id+'?')){S('bc_orders',L('bc_orders',[]).filter(x=>x.id!==id));draw()}}
+function delR(id){if(confirm('Удалить отзыв?')){S('bc_rev',L('bc_rev',[]).filter(x=>x.id!==id));draw()}}
+function draw(){const o=L('bc_orders',[]),r=L('bc_rev',[]),u=L('bc_users',[]);
+ document.getElementById('stat').innerHTML=`<div><b>${o.length}</b>заказов</div><div><b>${o.filter(x=>x.st==='Новый').length}</b>новых</div><div><b>${fmt(o.filter(x=>x.st!=='Отменён').reduce((a,x)=>a+x.sum,0))}</b>сумма</div><div><b>${u.length}</b>клиентов</div><div><b>${r.length}</b>отзывов</div>`;
+ document.getElementById('tb').innerHTML=['Заказы','Отзывы','Клиенты'].map(x=>`<button class="${x===tab?'on':''}" onclick="tab='${x}';draw()">${x}</button>`).join('');
+ let h='';
+ if(tab==='Заказы'){h=`<div class="tabs">${['Все',...ST].map(x=>`<button class="${x===f?'on':''}" onclick="f='${x}';draw()">${x}</button>`).join('')}</div>`+(o.filter(x=>f==='Все'||x.st===f).map(x=>`<div class="ord"><b>№${x.id}</b> · ${x.d} · ${x.via==='tg'?'Telegram':'WhatsApp'}<br><b>${esc(x.name)}</b> · ${esc(x.phone)} · ${esc(x.email)}<br>Адрес: ${esc(x.adr)}<p style="margin:8px 0;opacity:.8">${esc(x.items).replace(/\n/g,'<br>')}</p><b>${fmt(x.sum)}</b> · <select onchange="st('${x.id}',this.value)">${ST.map(s=>`<option ${s===x.st?'selected':''}>${s}</option>`).join('')}</select> <button class="btn del" onclick="delO('${x.id}')">Удалить</button></div>`).join('')||'<p>Заказов нет</p>')}
+ if(tab==='Отзывы')h=r.map(x=>`<div class="ord"><b>${esc(x.name)}</b> ${'★'.repeat(x.rt)} · ${x.d}<p style="margin:8px 0">${esc(x.t)}</p><button class="btn del" onclick="delR(${x.id})">Удалить</button></div>`).join('')||'<p>Отзывов нет</p>';
+ if(tab==='Клиенты')h=u.map(x=>`<div class="ord"><b>${esc(x.name)}</b><br>${esc(x.email)} · ${esc(x.phone)}</div>`).join('')||'<p>Клиентов нет</p>';
+ document.getElementById('v').innerHTML=h}
+draw();
+</script></body></html>
