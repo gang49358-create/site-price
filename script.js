@@ -1,74 +1,42 @@
-// ===== НАСТРОЙКИ: замени на свои =====
-const CONFIG={promos:{BAZE10:10,FIRST15:15},tg:'bazechina',wa:'79000000000',admins:[{email:'admin@baze.china',pass:'admin123'}]};
-// Фото кладите в папку img/ с именем из поля "img" (например img/jeremy-scott.jpg)
-const P=[
-{id:1,cat:'Кроссовки',n:'Adidas Jeremy Scott Wings',p:18900,img:'jeremy-scott.jpg',e:'👟',s:[38,39,40,41,42,43,44]},
-{id:2,cat:'Кроссовки',n:'Adidas Jeremy Scott 2.0',p:21900,img:'jeremy-scott-2.jpg',e:'👟',s:[38,39,40,41,42,43,44]},
-{id:3,cat:'Кроссовки',n:'Nike Air Force 1 Swarovski',p:24900,img:'af1-swarovski.jpg',e:'👟',s:[37,38,39,40,41,42,43]},
-{id:4,cat:'Одежда',n:'Худи Baze Oversize',p:5900,img:'hoodie.jpg',e:'🧥',s:['S','M','L','XL']},
-{id:5,cat:'Одежда',n:'Футболка Blue Wave',p:2900,img:'tshirt.jpg',e:'👕',s:['S','M','L','XL']},
-{id:6,cat:'Одежда',n:'Карго-штаны Street',p:6500,img:'cargo.jpg',e:'👖',s:['S','M','L','XL']},
-{id:7,cat:'Аксессуары',n:'Кепка Baze China',p:1900,img:'cap.jpg',e:'🧢',s:['Один размер']},
-{id:8,cat:'Аксессуары',n:'Очки Y2K Blue',p:2400,img:'glasses.jpg',e:'🕶️',s:['Один размер']},
-{id:9,cat:'Вещи',n:'Рюкзак Urban Black',p:4900,img:'bag.jpg',e:'🎒',s:['Один размер']},
-{id:10,cat:'Вещи',n:'Шоппер Baze',p:1500,img:'shopper.jpg',e:'👜',s:['Один размер']}];
-const $=s=>document.querySelector(s),L=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},S=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),reviews=()=>L('bc_rev',[]);
-const fmt=n=>n.toLocaleString('ru-RU')+' ₽',h=btoa;
-let cat='Все',cart=L('bc_cart',[]),favs=L('bc_fav',[]),promo='',disc=0;
-const D={'Кроссовки':'Оригинал из Китая, яркий дизайн, удобная колодка. Сверяйте размер по таблице ниже.','Одежда':'Плотная ткань, свободный крой, оригинальное качество. Размерная сетка стандартная.','Аксессуары':'Стильный аксессуар в тему тренда. Подходит под любой образ.','Вещи':'Практичная вещь на каждый день из оригинальной партии.'};
-const me=()=>L('bc_me',null),users=()=>L('bc_users',[]),orders=()=>L('bc_orders',[]);
-function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),2200)}
-function modal(html){$('#box').innerHTML=html;$('#mod').classList.add('on')}
-function close(){$('#mod').classList.remove('on')}
-$('#mod').onclick=e=>{if(e.target.id==='mod')close()};
-// ===== Каталог =====
-function tabs(){const c=['Все','Избранное',...new Set(P.map(x=>x.cat))];$('#tabs').innerHTML=c.map(x=>`<button class="${x===cat?'on':''}" onclick="cat='${x}';tabs();grid()">${x}</button>`).join('')}
-function list(){let l=P.filter(x=>cat==='Все'||(cat==='Избранное'?favs.includes(x.id):x.cat===cat));const q=$('#q').value.trim().toLowerCase(),o=$('#so').value;if(q)l=l.filter(x=>x.n.toLowerCase().includes(q));if(o)l.sort((a,b)=>o==='a'?a.p-b.p:b.p-a.p);return l}
-function fav(id){favs=favs.includes(id)?favs.filter(x=>x!==id):[...favs,id];S('bc_fav',favs);$('#fc').textContent=favs.length;cat==='Избранное'?grid():document.querySelectorAll('.fv').forEach(b=>{if(b.dataset.i==id)b.classList.toggle('on',favs.includes(id))})}
-function pg(id){const x=P.find(p=>p.id==id),b=x.img.replace('.jpg','');modal(`<div class="pgi" id="pgi"><img src="img/${x.img}" onerror="this.replaceWith(document.createTextNode('${x.e}'))"></div><div class="th">${[2,3].map(i=>`<img src="img/${b}-${i}.jpg" onerror="this.remove()" onclick="$('#pgi img').src=this.src">`).join('')}</div><h2>${x.n}</h2><p style="opacity:.8;margin-bottom:8px">${D[x.cat]}</p><select id="sz${x.id}">${x.s.map(s=>`<option>${s}</option>`).join('')}</select><div class="pr">${fmt(x.p)}</div>${x.cat==='Кроссовки'?'<table><tr><th>RU</th><th>38</th><th>40</th><th>42</th><th>44</th></tr><tr><td>см</td><td>24</td><td>25.5</td><td>27</td><td>28.5</td></tr></table>':''}<button class="btn" onclick="add(${x.id});close()">В корзину</button><button class="btn g" onclick="close()">Назад</button>`);
- const p=$('#pgi');p.onmousemove=e=>{const r=p.getBoundingClientRect();p.firstChild.style.transform=`rotateY(${((e.clientX-r.left)/r.width-.5)*30}deg) rotateX(${-((e.clientY-r.top)/r.height-.5)*20}deg) scale(1.05)`};p.onmouseleave=()=>p.firstChild.style.transform=''}
-function grid(){$('#grid').innerHTML=(list().map(x=>`<div class="card"><div class="im" onclick="pg(${x.id})"><button class="fv ${favs.includes(x.id)?'on':''}" data-i="${x.id}" onclick="event.stopPropagation();fav(${x.id})">♥</button><img src="img/${x.img}" alt="${x.n}" onerror="this.replaceWith(document.createTextNode('${x.e}'))"></div><div class="in2"><small>${x.cat}</small><h3 style="cursor:pointer" onclick="pg(${x.id})">${x.n}</h3><select id="sz${x.id}">${x.s.map(s=>`<option>${s}</option>`).join('')}</select><div class="pr">${fmt(x.p)}</div><button class="btn" style="width:100%" onclick="add(${x.id})">В корзину</button></div></div>`).join('')||'<p style="opacity:.6">Ничего не найдено</p>');
- const io=new IntersectionObserver(en=>en.forEach(e=>e.isIntersecting&&(e.target.classList.add('in'),io.unobserve(e.target))),{threshold:.1});
- document.querySelectorAll('.card').forEach(c=>{io.observe(c);c.onmousemove=e=>{const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;c.style.transform=`rotateY(${x*14}deg) rotateX(${-y*14}deg)`};c.onmouseleave=()=>c.style.transform=''})}
-// ===== Корзина =====
-function cnt(){S('bc_cart',cart);$('#cnt').textContent=cart.reduce((a,x)=>a+x.q,0)}
-function add(id){const s=$('#sz'+id).value,i=cart.find(x=>x.id===id&&x.s==s);i?i.q++:cart.push({id,s,q:1});cnt();toast('Добавлено в корзину')}
-function chg(i,d){cart[i].q+=d;if(cart[i].q<1)cart.splice(i,1);cnt();showCart()}
-const sub=()=>cart.reduce((a,x)=>a+P.find(p=>p.id===x.id).p*x.q,0),total=()=>Math.round(sub()*(100-disc)/100);
-function pa(){const c=$('#pc').value.trim().toUpperCase();if(CONFIG.promos[c]){promo=c;disc=CONFIG.promos[c];toast('Скидка '+disc+'%')}else{promo='';disc=0;toast('Промокод не найден')}showCart()}
-function showCart(){if(!cart.length)return modal('<h2>Корзина</h2><p>Пока пусто 🛒</p><button class="btn g" onclick="close()">Закрыть</button>');
- modal(`<h2>Корзина</h2>${cart.map((x,i)=>{const p=P.find(p=>p.id===x.id);return`<div class="row"><span>${p.n}<br><small>Размер: ${x.s}</small></span><span class="q"><button onclick="chg(${i},-1)">−</button> ${x.q} <button onclick="chg(${i},1)">+</button></span><b>${fmt(p.p*x.q)}</b></div>`}).join('')}<div class="pm"><input id="pc" placeholder="Промокод" value="${promo}"><button class="btn g" onclick="pa()">OK</button></div>${disc?`<div class="row"><span>Скидка ${disc}%</span><b>−${fmt(sub()-total())}</b></div>`:''}<div class="row"><b>Итого</b><b>${fmt(total())}</b></div><button class="btn" onclick="checkout()">Оформить заказ</button><button class="btn g" onclick="close()">Продолжить покупки</button>`)}
-function checkout(){if(!me()){toast('Сначала войдите или зарегистрируйтесь');return auth('login')}
- modal(`<h2>Оплата и связь</h2><p style="margin-bottom:10px;opacity:.8">Адрес доставки:</p><input id="adr" placeholder="Город, улица, дом, кв."><button class="btn" onclick="send('tg')">Оформить через Telegram</button><button class="btn g" onclick="send('wa')">Оформить через WhatsApp</button>`)}
-function send(w){const a=$('#adr').value.trim();if(!a)return toast('Укажите адрес');const u=me(),id=Date.now().toString().slice(-6);
- const lines=cart.map(x=>`• ${P.find(p=>p.id===x.id).n} (${x.s}) × ${x.q}`).join('\n');
- const txt=`Заказ №${id} — Baze China\nИмя: ${u.name}\nТел: ${u.phone}\nАдрес: ${a}\n${lines}\n${promo?'Промокод: '+promo+' (−'+disc+'%)\n':''}Итого: ${fmt(total())}\nХочу оплатить заказ.`;
- const o=orders();o.unshift({id,email:u.email,name:u.name,phone:u.phone,adr:a,items:lines,sum:total(),st:'Новый',d:new Date().toLocaleString('ru-RU'),via:w});S('bc_orders',o);
- cart=[];promo='';disc=0;cnt();navigator.clipboard?.writeText(txt).catch(()=>{});
- const url=(w==='tg'?`https://t.me/${CONFIG.tg}?text=${encodeURIComponent(txt)}`:`https://wa.me/${CONFIG.wa}?text=${encodeURIComponent(txt)}`);
- window.open(url,'_blank');
- modal(`<h2>Заказ №${id} создан ✅</h2><p>Откроется чат — отправьте сообщение с заказом (текст уже скопирован). Продавец пришлёт реквизиты для оплаты.</p><button class="btn" onclick="close()">Готово</button>`)}
-// ===== Регистрация / вход / профиль =====
-function auth(m){const r=m==='reg';modal(`<h2>${r?'Регистрация':'Вход'}</h2>${r?'<input id="n" placeholder="Имя"><input id="ph" placeholder="Телефон">':''}<input id="em" type="email" placeholder="Email"><input id="pw" type="password" placeholder="Пароль (мин. 6 символов)"><button class="btn" onclick="${r?'reg()':'login()'}">${r?'Создать аккаунт':'Войти'}</button><button class="lnk" onclick="auth('${r?'login':'reg'}')">${r?'Уже есть аккаунт? Войти':'Нет аккаунта? Регистрация'}</button>`)}
-function reg(){const n=$('#n').value.trim(),ph=$('#ph').value.trim(),em=$('#em').value.trim().toLowerCase(),pw=$('#pw').value;
- if(!n||!ph||!/^\S+@\S+\.\S+$/.test(em)||pw.length<6)return toast('Проверьте поля');
- const u=users();if(u.some(x=>x.email===em))return toast('Такой email уже есть');
- const nu={name:n,phone:ph,email:em,pw:h(pw)};u.push(nu);S('bc_users',u);S('bc_me',nu);toast('Добро пожаловать!');close();prof()}
-function login(){const em=$('#em').value.trim().toLowerCase(),pw=$('#pw').value;
- if(CONFIG.admins.some(a=>a.email===em&&a.pass===pw)){S('bc_me',{name:'Админ',phone:'-',email:em,admin:1});close();location.href='admin.html';return}
- const u=users().find(x=>x.email===em&&x.pw===h(pw));if(!u)return toast('Неверный email или пароль');S('bc_me',u);toast('Вы вошли');close();prof()}
-function logout(){localStorage.removeItem('bc_me');close();toast('Вы вышли')}
-function prof(){const u=me();if(!u)return auth('login');
- if(u.admin){location.href='admin.html';return}
- const my=orders().filter(o=>o.email===u.email);
- modal(`<h2>Мой профиль</h2><div class="row"><span>Имя</span><b>${esc(u.name)}</b></div><div class="row"><span>Email</span><b>${esc(u.email)}</b></div><div class="row"><span>Телефон</span><b>${esc(u.phone)}</b></div><h2 style="margin-top:18px">Мои заказы (${my.length})</h2>${my.map(o=>`<div class="row" style="display:block"><b>№${o.id}</b> · ${o.d}<br><small>${esc(o.items).replace(/\n/g,'<br>')}</small><br><b>${fmt(o.sum)}</b> · ${o.st}</div>`).join('')||'<p>Заказов пока нет</p>'}<button class="btn g" onclick="logout()">Выйти</button>`)}
-function revForm(){if(!me())return toast('Войдите, чтобы оставить отзыв'),auth('login');
- window.rt=5;modal(`<h2>Ваш отзыв</h2><div class="stars">${[1,2,3,4,5].map(i=>`<button class="on" onclick="setR(${i})">★</button>`).join('')}</div><textarea id="rx" maxlength="400" placeholder="Что понравилось?"></textarea><button class="btn" onclick="revSave()">Отправить</button>`)}
-function setR(n){rt=n;document.querySelectorAll('.stars button').forEach((b,i)=>b.classList.toggle('on',i<n))}
-function revSave(){const t=$('#rx').value.trim();if(t.length<3)return toast('Напишите пару слов');const u=me(),r=reviews();r.unshift({id:Date.now(),name:u.name,rt,t,d:new Date().toLocaleDateString('ru-RU')});S('bc_rev',r);close();revList();toast('Спасибо за отзыв!')}
-function revList(){const r=reviews();$('#rl').innerHTML=r.map(x=>`<div class="rv"><b>${esc(x.name)}</b><div class="st">${'★'.repeat(x.rt)}${'☆'.repeat(5-x.rt)}</div><p>${esc(x.t)}</p><small>${x.d}</small></div>`).join('')||'<p style="text-align:center;opacity:.6;grid-column:1/-1">Пока нет отзывов — будьте первым!</p>'}
-// ===== Запуск =====
-$('#bCart').onclick=showCart;$('#bFav').onclick=()=>{cat='Избранное';tabs();grid();location.hash='shop'};$('#fc').textContent=favs.length;$('#fab').href='https://t.me/'+CONFIG.tg;$('#bProf').onclick=prof;
-const cu=$('#cur');if(matchMedia('(hover:hover)').matches){cu.style.display='grid';onmousemove=e=>{cu.style.left=e.clientX+'px';cu.style.top=e.clientY+'px'}}
-tabs();grid();cnt();revList();const sc=$('.scene');addEventListener('mousemove',e=>sc.style.transform=`rotateY(${(e.clientX/innerWidth-.5)*50}deg) rotateX(${-(e.clientY/innerHeight-.5)*40}deg)`);setTimeout(()=>$('#pre').classList.add('off'),1600);
+'use strict';
+const DEFAULT=[
+{id:'1',name:'Nike Air Jordan 1 High OG',subtitle:'Chicago / Lost & Found',price:24990,category:'jordan',emoji:'👟',tag:'ICON'},
+{id:'2',name:'Nike Jeremy Scott Wings',subtitle:'Black / Metallic Gold',price:45990,category:'nike',emoji:'🪽',tag:'ARCHIVE'},
+{id:'3',name:'Yeezy Boost 350 V2',subtitle:'Onyx / Core Black',price:26990,category:'adidas',emoji:'👟',tag:'POPULAR'},
+{id:'4',name:'New Balance 9060',subtitle:'Rain Cloud / Grey',price:21990,category:'newbalance',emoji:'👞',tag:'NEW'},
+{id:'5',name:'Nike Air Force 1 ’07',subtitle:'Triple White',price:12990,category:'nike',emoji:'👟',tag:'CLASSIC'},
+{id:'6',name:'Adidas Yeezy 700',subtitle:'Wave Runner',price:29990,category:'adidas',emoji:'🥾',tag:'LIMITED'},
+{id:'7',name:'Jordan 4 Retro',subtitle:'White Cement',price:28990,category:'jordan',emoji:'👟',tag:'HOT'},
+{id:'8',name:'Nike Dunk Low Panda',subtitle:'Black / White',price:14990,category:'nike',emoji:'👟',tag:''},
+{id:'9',name:'Balenciaga Track',subtitle:'Grey / Neon',price:51990,category:'other',emoji:'🥾',tag:'STATEMENT'},
+{id:'10',name:'New Balance 550',subtitle:'White / Grey',price:16990,category:'newbalance',emoji:'👞',tag:''},
+{id:'11',name:'Converse Chuck 70',subtitle:'Black / Egret',price:9990,category:'other',emoji:'👟',tag:'EVERGREEN'},
+{id:'12',name:'Nike Air Max DN',subtitle:'Black / Volt',price:18990,category:'nike',emoji:'👟',tag:'FRESH'}];
+const $=s=>document.querySelector(s), K={p:'baze_products_v2',c:'baze_cart_v2',l:'baze_likes_v2'};
+const money=n=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:0}).format(Number(n)||0);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function read(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}}function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{notify('Не удалось сохранить данные.')}}
+let products=read(K.p,DEFAULT),cart=read(K.c,[]),likes=read(K.l,[]),cat='all',query='',timer;
+function notify(s){$('#toast').textContent=s;$('#toast').classList.add('show');clearTimeout(timer);timer=setTimeout(()=>$('#toast').classList.remove('show'),2400)}
+function product(id){return products.find(p=>p.id===id)}
+function render(){let list=products.filter(p=>(cat==='all'||p.category===cat)&&`${p.name} ${p.subtitle} ${p.category}`.toLowerCase().includes(query.toLowerCase()));$('#products').innerHTML=list.map((p,i)=>`<article class="product" style="animation-delay:${i*35}ms"><div class="product-visual">${p.tag?`<span class="product-tag">${esc(p.tag)}</span>`:''}<button class="like ${likes.includes(p.id)?'liked':''}" data-like="${esc(p.id)}">${likes.includes(p.id)?'♥':'♡'}</button><span class="product-emoji">${esc(p.emoji||'👟')}</span></div><div class="product-meta"><div><h3>${esc(p.name)}</h3><p class="product-sub">${esc(p.subtitle||'BAZE selection')}</p></div><span class="product-price">${money(p.price)}</span></div><button class="product-add" data-add="${esc(p.id)}"><span>Добавить в корзину</span><b>↗</b></button></article>`).join('');$('#empty').classList.toggle('hidden',!!list.length);renderAdmin()}
+function renderCart(){cart=cart.filter(x=>product(x.id)&&x.qty>0);$('#cartCount').textContent=cart.reduce((s,x)=>s+x.qty,0);$('#cartTotal').textContent=money(cart.reduce((s,x)=>s+product(x.id).price*x.qty,0));$('#cartItems').innerHTML=cart.length?cart.map(x=>{let p=product(x.id);return `<div class="cart-row"><div class="cart-art">${esc(p.emoji||'👟')}</div><div><h4>${esc(p.name)}</h4><p>${money(p.price*x.qty)}</p><div class="qty"><button data-qty="${esc(p.id)}" data-delta="-1">−</button><span>${x.qty}</span><button data-qty="${esc(p.id)}" data-delta="1">+</button></div></div><button class="remove" data-remove="${esc(p.id)}">×</button></div>`}).join(''):'<p style="padding:40px 0;text-align:center;color:#777;font-size:12px">Корзина пуста. Найди свою пару ↗</p>';save(K.c,cart)}
+function add(id){if(!product(id))return;let x=cart.find(x=>x.id===id);x?x.qty++:cart.push({id,qty:1});renderCart();notify('Пара добавлена в корзину ↗')}
+$('#products').addEventListener('click',e=>{let a=e.target.closest('[data-add]'),l=e.target.closest('[data-like]');if(a)add(a.dataset.add);if(l){let id=l.dataset.like;likes=likes.includes(id)?likes.filter(x=>x!==id):[...likes,id];save(K.l,likes);render();notify(likes.includes(id)?'Добавлено в избранное ♥':'Убрано из избранного')}})
+$('#filters').addEventListener('click',e=>{let b=e.target.closest('[data-cat]');if(!b)return;cat=b.dataset.cat;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===b));render()});
+$('#search').addEventListener('input',e=>{query=e.target.value.trim();render()});
+function openCart(){closeAdmin();$('#shade').classList.add('show');$('#drawer').classList.add('open')}function closeCart(){$('#shade').classList.remove('show');$('#drawer').classList.remove('open')}
+$('#cartOpen').addEventListener('click',openCart);$('#cartClose').addEventListener('click',closeCart);$('#shade').addEventListener('click',closeCart);
+$('#cartItems').addEventListener('click',e=>{let q=e.target.closest('[data-qty]'),r=e.target.closest('[data-remove]');if(q){let x=cart.find(x=>x.id===q.dataset.qty);if(x)x.qty+=Number(q.dataset.delta);cart=cart.filter(x=>x.qty>0);renderCart()}if(r){cart=cart.filter(x=>x.id!==r.dataset.remove);renderCart()}});
+$('#checkout').addEventListener('click',()=>notify(cart.length?'Демо-режим: подключи оплату и сервер для заказа.':'Сначала добавь товар в корзину.'));
+function openAdmin(){closeCart();$('#adminModal').classList.add('open');renderAdmin()}function closeAdmin(){$('#adminModal').classList.remove('open')}
+$('#adminOpen').addEventListener('click',openAdmin);$('#adminClose').addEventListener('click',closeAdmin);$('#adminModal').addEventListener('click',e=>{if(e.target.id==='adminModal')closeAdmin()});
+function reset(){ $('#productForm').reset();$('#editId').value=''}$('#resetForm').addEventListener('click',reset);
+$('#productForm').addEventListener('submit',e=>{e.preventDefault();let id=$('#editId').value,name=$('#pName').value.trim(),price=Number($('#pPrice').value);if(!name||price<=0||!Number.isFinite(price)){notify('Проверь название и цену.');return}let p={id:id||'custom-'+Date.now(),name,price,category:$('#pCategory').value,emoji:$('#pEmoji').value.trim()||'👟',subtitle:$('#pSubtitle').value.trim(),tag:$('#pTag').value.trim()};products=id?products.map(x=>x.id===id?p:x):[p,...products];save(K.p,products);reset();render();renderCart();renderAdmin();notify(id?'Товар обновлён':'Товар добавлен')});
+function renderAdmin(){$('#adminCount').textContent=products.length+' позиций';$('#adminList').innerHTML=products.map(p=>`<div class="admin-row"><div><strong>${esc(p.emoji||'👟')} ${esc(p.name)}</strong><small>${money(p.price)} · ${esc(p.category)}</small></div><div class="admin-row-actions"><button data-edit="${esc(p.id)}">Изменить</button><button class="delete" data-delete="${esc(p.id)}">Удалить</button></div></div>`).join('')}
+$('#adminList').addEventListener('click',e=>{let a=e.target.closest('[data-edit]'),d=e.target.closest('[data-delete]');if(a){let p=product(a.dataset.edit);if(!p)return;$('#editId').value=p.id;$('#pName').value=p.name;$('#pPrice').value=p.price;$('#pCategory').value=p.category;$('#pEmoji').value=p.emoji||'';$('#pSubtitle').value=p.subtitle||'';$('#pTag').value=p.tag||'';$('#pName').focus()}if(d){let p=product(d.dataset.delete);if(!p||!confirm(`Удалить «${p.name}»?`))return;products=products.filter(x=>x.id!==p.id);cart=cart.filter(x=>x.id!==p.id);likes=likes.filter(x=>x!==p.id);save(K.p,products);save(K.c,cart);save(K.l,likes);render();renderCart();renderAdmin();notify('Товар удалён')}});
+$('#friendsButton').addEventListener('click',()=>notify('Комьюнити в демо-режиме: можно подключить аккаунты и чат.'));
+$('#menuToggle').addEventListener('click',()=>$('.nav').classList.toggle('open'));document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>$('.nav').classList.remove('open')));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeCart();closeAdmin();$('.nav').classList.remove('open')}});
+const cursor=$('#cursor');if(matchMedia('(hover:hover) and (pointer:fine)').matches){document.addEventListener('mousemove',e=>{cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px'});document.addEventListener('mouseover',e=>cursor.classList.toggle('hover',!!e.target.closest('a,button,input')))}else cursor.style.display='none';
+window.addEventListener('load',()=>setTimeout(()=>$('#intro').classList.add('done'),600));render();renderCart();
